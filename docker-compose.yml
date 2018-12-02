@@ -1,0 +1,66 @@
+version: '3'
+
+services:
+  node_app_1:
+    build:
+      context: ./node
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3000      
+    networks:
+      - backend
+      - api-ext
+    ports:
+      - 3000
+
+  node_app_2:
+    build:
+      context: ./node
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3000
+    networks:
+      - backend
+      - api-ext
+    ports:
+      - 3000     
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    networks:
+      - backend
+    ports:
+      - 8080:8080
+
+  redis:
+    image: redis
+    networks:
+      - backend
+    ports:
+      - 6379:6379
+
+  postgres:
+    image: postgres
+    networks:
+      - backend
+    ports:
+      - 5432:5432
+
+  nginx-api-ext-virtual:
+    image: nginx
+    networks:
+      - api-ext
+    ports:
+      - 80:80
+
+networks:
+  backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24
+
+  api-ext:
+    external: true
