@@ -37,7 +37,7 @@ RUN node -v
 RUN npm -v
 
 # upgrade npm
-RUN npm -g update
+RUN npm install -g npm@latest
 
 # set the base image to nvm
 # FROM nvm

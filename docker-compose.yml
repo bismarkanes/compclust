@@ -5,8 +5,14 @@ services:
     build:
       context: ./node
       dockerfile: Dockerfile
+    depends_on:
+      - postgres
     environment:
-      - PORT=3000      
+      - PORT=3000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     networks:
       - backend
       - api-ext
@@ -17,8 +23,14 @@ services:
     build:
       context: ./node
       dockerfile: Dockerfile
+    depends_on:
+      - postgres
     environment:
       - PORT=3000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     networks:
       - backend
       - api-ext
@@ -29,6 +41,7 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile
+    depends_on: ["node_app_1", "node_app_2"]
     networks:
       - backend
     ports:
@@ -43,10 +56,15 @@ services:
 
   postgres:
     image: postgres
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
     networks:
       - backend
     ports:
-      - 5432:5432
+      - 5432
+    volumes:
+      - ./volumes/db:/var/lib/postgresql/data
 
   nginx-api-ext-virtual:
     image: nginx
