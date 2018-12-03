@@ -10,3 +10,8 @@ run:
 
 stop:
 	docker-compose stop
+
+uninstall:
+	docker network create api-ext
+	rm -rf volumes/db/*
+	rm -rf volumes/redis/*
