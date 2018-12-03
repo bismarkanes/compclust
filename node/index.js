@@ -2,17 +2,25 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT;
 const pg = require('pg');
-const pool = new pg.Pool({
-  connectionString: `postgres://postgres:postgres@${process.env.DB_HOST}:${process.env.DB_PORT}/postgres`,
-  max: 20,
+
+const poolConfs = process.env.DB_HOSTS.split(' ').map((host) => {
+  return {
+    host,
+    pool: new pg.Pool({
+      connectionString: `postgres://postgres:postgres@${host}:${process.env.DB_PORT}/postgres`,
+      max: 20,
+    }),
+  };
 });
 
-pool.on('connect', () => {
-  console.log('Success connected to db');
-});
+poolConfs.forEach((conf) => {
+  conf.pool.on('connect', () => {
+    console.log(`Success connected to db on host ${conf.host}`);
+  });
 
-pool.on('error', () => {
-  console.error('Db connection error');
+  conf.pool.on('error', () => {
+    console.error(`Db connection error on host ${conf.host}`);
+  });
 });
 
 app.get('/', (req, res) => {
@@ -28,24 +36,35 @@ app.get('/ping', (req, res) => {
   res.send('PONG');
 });
 
-app.get('/tests/db', (req, res) => {
-  pool.query('select * from pg_stat_activity').then((data) => {
-    let stats = data.rows.map((row, index) => {
-      return {
-        index,
-        clientAddress: row.client_addr,
-        clientPort: row.client_port,
-      };
-    });
+app.get('/tests/db', async (req, res) => {
+  let connHosts = [];
 
-    res.json({
-      numberOfConnection: stats.length,
-      stats,
-    });
-  }).catch((err) => {
-    console.error(err);
-    res.status(400).send('ERR_DB_QUERY');
-  });
+  for(let i = 0; i < poolConfs.length; i++) {
+    let conf = poolConfs[i];
+
+    try {
+      let data = await conf.pool.query('select * from pg_stat_activity');
+
+      let stats = data.rows.map((row, index) => {
+        return {
+          index,
+          clientAddress: row.client_addr,
+          clientPort: row.client_port,
+        };
+      });
+
+      connHosts.push({
+        host: conf.host,
+        numberOfConnection: stats.length,
+        stats,
+      });
+    } catch (e) {
+      console.error(e);
+      return res.status(400).send('ERR_DB_QUERY');
+    }
+  }
+
+  res.json(connHosts);
 });
 
 app.listen(port, (err) => {

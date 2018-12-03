@@ -9,10 +9,10 @@ services:
       - postgres
     environment:
       - PORT=3000
-      - DB_HOST=postgres
       - DB_PORT=5432
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - DB_HOSTS=postgres
     networks:
       - backend
       - api-ext
@@ -27,10 +27,10 @@ services:
       - postgres
     environment:
       - PORT=3000
-      - DB_HOST=postgres
       - DB_PORT=5432
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - DB_HOSTS=postgres
     networks:
       - backend
       - api-ext
@@ -78,9 +78,6 @@ services:
 networks:
   backend:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 10.0.0.0/24
 
   api-ext:
     external: true
