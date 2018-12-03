@@ -68,12 +68,12 @@ services:
     volumes:
       - ./volumes/db:/var/lib/postgresql/data
 
-  nginx-api-ext-virtual:
-    image: nginx
-    networks:
-      - api-ext
-    ports:
-      - 80:80
+  # nginx-api-ext-virtual:
+  #   image: nginx
+  #   networks:
+  #     - api-ext
+  #   ports:
+  #     - 80:80
 
 networks:
   backend:
