@@ -2,8 +2,17 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT;
 const pg = require('pg');
-const client = new pg.Client({
+const pool = new pg.Pool({
   connectionString: `postgres://postgres:postgres@${process.env.DB_HOST}:${process.env.DB_PORT}/postgres`,
+  max: 20,
+});
+
+pool.on('connect', () => {
+  console.log('Success connected to db');
+});
+
+pool.on('error', () => {
+  console.error('Db connection error');
 });
 
 app.get('/', (req, res) => {
@@ -20,13 +29,22 @@ app.get('/ping', (req, res) => {
 });
 
 app.get('/tests/db', (req, res) => {
-  client.connect((err) => {
-    if (err) {
-      return res.status(400).send('ERROR DB Connection!');
-    }
+  pool.query('select * from pg_stat_activity').then((data) => {
+    let stats = data.rows.map((row, index) => {
+      return {
+        index,
+        clientAddress: row.client_addr,
+        clientPort: row.client_port,
+      };
+    });
 
-    res.send('DB connection success!');
-    client.end();
+    res.json({
+      numberOfConnection: stats.length,
+      stats,
+    });
+  }).catch((err) => {
+    console.error(err);
+    res.status(400).send('ERR_DB_QUERY');
   });
 });
 
