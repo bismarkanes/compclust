@@ -6,8 +6,9 @@ const pg = require('pg');
 const poolConfs = process.env.DB_HOSTS.split(' ').map((host) => {
   return {
     host,
+    db: process.env.DB_NAME,
     pool: new pg.Pool({
-      connectionString: `postgres://postgres:postgres@${host}:${process.env.DB_PORT}/postgres`,
+      connectionString: `postgres://postgres:postgres@${host}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
       max: 20,
     }),
   };
@@ -27,7 +28,7 @@ app.get('/', (req, res) => {
   res.json({
     hostname: process.env.HOSTNAME,
     port: process.env.PORT,
-    db: `${process.env.DB_HOST}:${process.env.DB_PORT}`,
+    db: `${process.env.DB_NAME}:${process.env.DB_PORT}`,
     redis: `${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
   });
 });
@@ -55,6 +56,7 @@ app.get('/tests/db', async (req, res) => {
 
       connHosts.push({
         host: conf.host,
+        db: conf.db,
         numberOfConnection: stats.length,
         stats,
       });

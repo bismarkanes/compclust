@@ -13,6 +13,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - DB_HOSTS=postgres
+      - DB_NAME=identities
     networks:
       - backend
       - api-ext
@@ -31,11 +32,31 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - DB_HOSTS=postgres
+      - DB_NAME=identities
     networks:
       - backend
       - api-ext
     ports:
       - 3000
+
+  node_mon:
+    build:
+      context: ./node_mon
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+    environment:
+      - PORT=3128
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DB_HOSTS=postgres
+      - DB_NAME=identities
+    networks:
+      - backend
+      - api-ext
+    ports:
+      - 3128:3128
 
   nginx:
     build:
@@ -61,6 +82,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
+      - POSTGRES_DB=identities
     networks:
       - backend
     ports:
