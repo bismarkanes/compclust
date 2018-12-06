@@ -102,12 +102,20 @@ app.post('/api/inf/v1/queries/get/:host', async (req, res) => {
 
   for(let i = 0; i < sqls.length; i++) {
     let sql = sqls[i];
+    let dataInfo = {
+      fields: [],
+      rows: [],
+    };
 
     if (validateSql(sql)) {
       try {
         let data = await conf.pool.query(sql);
         if (data && data.rows) {
-          result.push(data.rows);
+          dataInfo.fields = data.fields.map((field) => {
+            return field.name;
+          });
+          dataInfo.rows = data.rows;
+          result.push(dataInfo);
         }
       } catch (e) {
         console.error(e);
@@ -147,18 +155,35 @@ app.post('/api/inf/v1/queries/update/:host', async (req, res) => {
 });
 
 app.post('/api/inf/v1/jscsv', async (req, res) => {
-  let strs = [];
+  const DELIM = '\t';
+  let csvText = '';
 
   // data
   for(let i = 0; i < req.body.length; i++) {
-    let data = req.body[i];
+    let dataInfo = req.body[i];
+    if (!dataInfo) break;
 
-    Object.keys(data).forEach((key) => {
-      strs.push(data[key]);
-    });
+    // fields
+    let fields = dataInfo.fields;
+    let fieldStr = fields.join(DELIM);
+
+    let rowStr = '';
+    for(let j = 0; j < dataInfo.rows.length; j++) {
+      let row = [];
+
+      fields.forEach((fieldName) => {
+        let fieldValue = dataInfo.rows[j][fieldName];
+
+        row.push(fieldValue);
+      });
+
+      rowStr = rowStr.concat(row.join(DELIM) + '\n');
+    }
+
+    csvText = csvText.concat(fieldStr + '\n' + rowStr + '\n');
   }
 
-  res.json(strs);
+  res.send(csvText);
 });
 
 app.listen(port, (err) => {
