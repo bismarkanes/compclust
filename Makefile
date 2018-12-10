@@ -9,7 +9,7 @@ run:
 	docker-compose up -d --build
 
 stop:
-	docker-compose stop
+	docker-compose down
 
 uninstall:
 	rm -rf volumes/db/*
